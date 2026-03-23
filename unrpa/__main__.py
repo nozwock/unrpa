@@ -67,10 +67,19 @@ def main() -> None:
     action_group.add_argument(
         "-x",
         "--extract",
+        action="store_const",
+        const="extract",
+        dest="action",
+        help="extract files from the archive(s).",
+    )
+
+    parser.add_argument(
+        "-o",
+        "--output",
         action="store",
         type=str,
         metavar="PATH",
-        dest="extract",
+        dest="output",
         default=None,
         help="extract files to the given path (default: the current working directory).",
     )
@@ -115,7 +124,7 @@ def main() -> None:
         + ".",
     )
     advanced.add_argument(
-        "-o",
+        "-O",
         "--offset",
         action="store",
         type=int,
@@ -163,6 +172,9 @@ def main() -> None:
     elif bool(args.key) != bool(args.offset):
         parser.error("If you set --key or --offset, you must set both.")
 
+    if args.action != "extract" and args.output is not None:
+        parser.error("Option --output: only valid when --extract is set.")
+
     for filename in args.files:
         if not os.path.isfile(filename):
             parser.error(f"No such file: “{filename}”.")
@@ -171,7 +183,7 @@ def main() -> None:
             extractor = UnRPA(
                 filename,
                 verbosity=args.verbose,
-                path=args.extract,
+                path=args.output,
                 mkdir=True,
                 version=provided_version,
                 continue_on_error=args.continue_on_error,
@@ -182,8 +194,10 @@ def main() -> None:
                 extractor.list_files()
             elif args.action == "tree":
                 extractor.list_files_tree()
-            else:
+            elif args.action == "extract":
                 extractor.extract_files()
+            else:
+                raise AssertionError("Expected code to be unreachable")
         except UnRPAError as error:
             help_message = f"\n{error.cmd_line_help}" if error.cmd_line_help else ""
             sys.exit(f"\n\033[31m{error.message}{help_message}\033[30m")
