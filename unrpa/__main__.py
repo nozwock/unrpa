@@ -76,6 +76,18 @@ def main() -> None:
     )
 
     parser.add_argument(
+        "-g",
+        "--glob",
+        action="extend",
+        type=str,
+        metavar="PATTERN",
+        nargs="*",
+        dest="globs",
+        default=[],
+        help="include or exclude file paths to perform actions on. Use prefix `!` for exclude globs.",
+    )
+
+    parser.add_argument(
         "--version", action="version", version=f"{meta.name} {meta.version}"
     )
 
@@ -164,6 +176,7 @@ def main() -> None:
                 version=provided_version,
                 continue_on_error=args.continue_on_error,
                 offset_and_key=provided_offset_and_key,
+                globs=args.globs,
             )
             if args.action == "list":
                 extractor.list_files()

@@ -1,3 +1,4 @@
+import fnmatch
 import itertools
 import operator
 import os
@@ -6,16 +7,18 @@ import sys
 import traceback
 import zlib
 from typing import (
-    Union,
-    Tuple,
-    Optional,
-    Dict,
-    cast,
-    Iterable,
-    Type,
     BinaryIO,
+    Dict,
     FrozenSet,
+    Iterable,
+    List,
+    Optional,
     Sequence,
+    Set,
+    Tuple,
+    Type,
+    Union,
+    cast,
 )
 
 from unrpa.errors import (
@@ -87,6 +90,7 @@ class UnRPA:
         continue_on_error: bool = False,
         offset_and_key: Optional[Tuple[int, int]] = None,
         extra_versions: FrozenSet[Type[Version]] = frozenset(),
+        globs: Optional[List[str]] = None,
     ) -> None:
         self.verbose = verbosity
         if path:
@@ -100,6 +104,7 @@ class UnRPA:
         self.offset_and_key = offset_and_key
         self.tty = sys.stdout.isatty()
         self.versions = UnRPA.provided_versions | extra_versions
+        self.globs = [] if globs is None else globs
 
     def log(
         self, verbosity: int, human_message: str, machine_message: str = None
@@ -120,7 +125,7 @@ class UnRPA:
         version = self.version() if self.version else self.detect_version()
 
         with open(self.archive, "rb") as archive:
-            index = self.get_index(archive, version)
+            index = self.get_filtered_index(archive, version)
             total_files = len(index)
             for file_number, (path, data) in enumerate(index.items()):
                 try:
@@ -145,7 +150,7 @@ class UnRPA:
     def list_files(self) -> None:
         self.log(UnRPA.info, f"Listing files in {self.archive}:")
         with open(self.archive, "rb") as archive:
-            paths = self.get_index(archive).keys()
+            paths = self.get_filtered_index(archive).keys()
         for path in sorted(paths):
             print(path)
 
@@ -156,7 +161,7 @@ class UnRPA:
 
     def tree(self) -> TreeNode:
         with open(self.archive, "rb") as archive:
-            paths = sorted(self.get_index(archive).keys())
+            paths = sorted(self.get_filtered_index(archive).keys())
         return TreeNode(
             self.archive,
             [list(reversed(list(self.full_split(path)))) for path in paths],
@@ -199,6 +204,13 @@ class UnRPA:
         self.log(UnRPA.debug, f"Creating directory structure: {name}")
         if not os.path.exists(name):
             os.makedirs(name)
+
+    def get_filtered_index(
+        self, archive: BinaryIO, version: Optional[Version] = None
+    ) -> Dict[str, ComplexIndexEntry]:
+        index = self.get_index(archive, version)
+        filtered = _glob_filter(index.keys(), self.globs)
+        return {k: v for k, v in index.items() if k in filtered}
 
     def get_index(
         self, archive: BinaryIO, version: Optional[Version] = None
@@ -275,3 +287,22 @@ class UnRPA:
             else cast(ComplexIndexPart, part)
             for part in entry
         ]
+
+
+def _glob_filter(names: Iterable[str], pats: List[str]) -> Set[str]:
+    """Platform based case-sensitivity."""
+
+    included: Set[str] = set()
+    excluded: Set[str] = set()
+
+    atleast_one_include_pat = False
+    for pat in pats:
+        if pat.startswith("!"):
+            # XXX There's pathlib.Path.full_match() that supports setting case sensitivity but it's only available in
+            # python 3.13+. And, Path.match() doesn't do recursive globs.
+            excluded.update(fnmatch.filter(names, pat[1:]))
+        else:
+            atleast_one_include_pat = True
+            included.update(fnmatch.filter(names, pat))
+
+    return (included if atleast_one_include_pat else set(names)) - excluded
