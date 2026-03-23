@@ -76,15 +76,6 @@ def main() -> None:
     )
 
     parser.add_argument(
-        "-m",
-        "--mkdir",
-        action="store_true",
-        dest="mkdir",
-        default=False,
-        help="will make any missing directories in the given extraction path.",
-    )
-
-    parser.add_argument(
         "--version", action="version", version=f"{meta.name} {meta.version}"
     )
 
@@ -160,12 +151,6 @@ def main() -> None:
     elif bool(args.key) != bool(args.offset):
         parser.error("If you set --key or --offset, you must set both.")
 
-    if args.mkdir and not args.extract:
-        parser.error("Option --mkdir: only valid when --extract is set.")
-
-    if not args.mkdir and args.extract and not os.path.isdir(args.extract):
-        parser.error(f"No such directory: “{args.extract}”. Use --mkdir to create it.")
-
     for filename in args.files:
         if not os.path.isfile(filename):
             parser.error(f"No such file: “{filename}”.")
@@ -173,12 +158,12 @@ def main() -> None:
         try:
             extractor = UnRPA(
                 filename,
-                args.verbose,
-                args.extract,
-                args.mkdir,
-                provided_version,
-                args.continue_on_error,
-                provided_offset_and_key,
+                verbosity=args.verbose,
+                path=args.extract,
+                mkdir=True,
+                version=provided_version,
+                continue_on_error=args.continue_on_error,
+                offset_and_key=provided_offset_and_key,
             )
             if args.action == "list":
                 extractor.list_files()
