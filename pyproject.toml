@@ -1,0 +1,36 @@
+[build-system]
+requires = ["uv_build>=0.10.12,<0.11.0"]
+build-backend = "uv_build"
+
+[project]
+name = "unrpa"
+version = "2.3.0"
+description = "Extract files from the RPA archive format (from the Ren'Py Visual Novel Engine)."
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [
+  { name = "Gareth Latty", email = "gareth@lattyware.co.uk" }
+]
+license = { text = "GPL-3.0-or-later" }
+keywords = ["renpy", "rpa", "archive", "extract"]
+classifiers = [
+  "Topic :: System :: Archiving",
+  "Programming Language :: Python :: 3.8",
+  "Operating System :: OS Independent",
+  "Environment :: Console",
+]
+dependencies = []
+
+[project.optional-dependencies]
+ZiX = ["uncompyle6>=3.5.0"]
+
+[project.urls]
+Homepage = "https://github.com/Lattyware/unrpa"
+Repository = "https://github.com/Lattyware/unrpa.git"
+
+[project.scripts]
+unrpa = "unrpa.__main__:main"
+
+[tool.uv.build-backend]
+module-name = "unrpa"
+module-root = ""
