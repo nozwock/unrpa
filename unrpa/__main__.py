@@ -65,11 +65,12 @@ def main() -> None:
         help="list the contents of the archive(s) in a tree view",
     )
     action_group.add_argument(
-        "-p",
-        "--path",
+        "-x",
+        "--extract",
         action="store",
         type=str,
-        dest="path",
+        metavar="PATH",
+        dest="extract",
         default=None,
         help="extract files to the given path (default: the current working directory).",
     )
@@ -159,11 +160,11 @@ def main() -> None:
     elif bool(args.key) != bool(args.offset):
         parser.error("If you set --key or --offset, you must set both.")
 
-    if args.mkdir and not args.path:
-        parser.error("Option --mkdir: only valid when --path is set.")
+    if args.mkdir and not args.extract:
+        parser.error("Option --mkdir: only valid when --extract is set.")
 
-    if not args.mkdir and args.path and not os.path.isdir(args.path):
-        parser.error(f"No such directory: “{args.path}”. Use --mkdir to create it.")
+    if not args.mkdir and args.extract and not os.path.isdir(args.extract):
+        parser.error(f"No such directory: “{args.extract}”. Use --mkdir to create it.")
 
     for filename in args.files:
         if not os.path.isfile(filename):
@@ -173,7 +174,7 @@ def main() -> None:
             extractor = UnRPA(
                 filename,
                 args.verbose,
-                args.path,
+                args.extract,
                 args.mkdir,
                 provided_version,
                 args.continue_on_error,
