@@ -47,7 +47,7 @@ def main() -> None:
         help="no non-essential output.",
     )
 
-    action_group = parser.add_mutually_exclusive_group()
+    action_group = parser.add_mutually_exclusive_group(required=True)
     action_group.add_argument(
         "-l",
         "--list",
