@@ -64,7 +64,7 @@ def main() -> None:
         dest="action",
         help="list the contents of the archive(s) in a tree view",
     )
-    parser.add_argument(
+    action_group.add_argument(
         "-p",
         "--path",
         action="store",
@@ -73,6 +73,7 @@ def main() -> None:
         default=None,
         help="extract files to the given path (default: the current working directory).",
     )
+
     parser.add_argument(
         "-m",
         "--mkdir",
@@ -157,9 +158,6 @@ def main() -> None:
         provided_offset_and_key = (args.offset, args.key)
     elif bool(args.key) != bool(args.offset):
         parser.error("If you set --key or --offset, you must set both.")
-
-    if args.action and args.path:
-        parser.error("Option -path: only valid when extracting.")
 
     if args.mkdir and not args.path:
         parser.error("Option --mkdir: only valid when --path is set.")
